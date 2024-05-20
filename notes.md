@@ -1,42 +1,178 @@
-# Komprese, CoDec, MuxDemux, containery
+# Video formáty, základ
 
 ## Analog $\rightarrow$ digital
 
-- kvantizace
-  - kolik hodnot je potřeba pro reprezentace
-- samplování
-  - jak často je potřeba pořídit záznam analogového světa
-  - čím častěji, tím lepší kvalita, ale zároveň vyšší spotřeba paměti
+- digitální video - posloupnost obrázků
+- zvuk - příčné kmitání vzduchu
+- analogové signály $\rightarrow$ je potřeba je diskretizovat samplováním (a diskretizovat samply)
+
+### Kvantizace
+
+- kolik hodnot je potřeba pro reprezentaci
+- diskretizace oboru hodnot signálu, je to **ztrátový a nevratný** proces
+- bitová hloubka - počet bitů pro reprezentaci jedné nasamplované hodnoty (třeba jednoho pixelu videa)
+  - $n$-bitový systém má $2^n$ kvantizačních levelů (q-levels, aka kolik máme chlívků, kam hodnoty padají)
+  - *quantization error* ("kvantizační chyba") - rozdíl mezi opravdovou naměřenou hodnotou a nejbližší diskrétní hodnotou, kam je naměřená přiřazená
+
+### Samplování
+
+- jak často je potřeba pořídit záznam analogového světa?
+- nízké samplování vede ke ztrátě kvality dat
+- čím častěji, tím lepší kvalita, ale zároveň vyšší spotřeba paměti
+
+#### Jak samplovat správně?
+
+- alespoň 2krát tak vysoká frekvence samplování jako nejmenší frekvence, kterou chci sledovat (u hudby 44 kHz, zdravý člověk slyší 20-20.000 kHz)
+
+### Aliasing
+
+- chyba při samplování
+
+![](https://upload.wikimedia.org/wikipedia/commons/8/8c/Po_deseti_minut%C3%A1ch.gif)
+
+- hodiny jsou snímané po 50 minutách a vypadá, jako kdyby se ručička točila protisměru
+- dá se mu částečně zabránit viz [jak samplovat správně](#jak-samplovat-správně)
+
+![](https://www.esa.int/var/esa/storage/images/esa_multimedia/images/2014/06/aliasing_illustration/14603491-1-eng-GB/Aliasing_illustration_pillars.jpg)
+
+### Kvantizační chyba
+
+- **falešné hrany**
+  - pokud je dělení příliš hrubé, dochází ke vzniku falešných hran
+  - hrany jsou způsobeny nedostatkem informace (neexistují jemné přechody)
+- **kvantizační šum**
+  - nepřesnosti
+  - skoky mezi barvami a jasem, zejména na místech plynulých přechodů
+
+<center>
+<p>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/Dithering_example_undithered.png" width =250/>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/4/48/Dithering_example_undithered_16color_palette.png" width=250/>
+</p>
+</center>
+
+## Kvantování vs vzorkování
+
+- nemáme-li dostatek prostoru na uložení souboru a musíme se rozhodovat, kde ho ušetříme:
+  - obrázek s detaily - jemné samplování, hrubé kvantování
+  - obrázek s věrnými barvami - jemné kvantování, hrubé samplování
+
+# Ukládání a sdílení multimédií
+
+- **multi**medium $\rightarrow$ sposuta částí
+- balí se do tzv. *container*ů
+  - soboury ve kontejneru jsou kompriovaná, ale kontejner $\not =$ komprese
+- míra komprese se dá měřit
+- **bit rate** - množství dat použito na reprezentaci média za časový úsek
+
+## CoDec
+
+- **coder, decoder** - de/komprese
+- decoder vezme sekvenci bitů a vytvoří z nich bitmapy, které se pošlou na zobrazovacé zařízení, coder dělá přesný opak
+- populární formáty: H.264, H.265
+- **frame rate** - počet bitmap za sekundu (pro lidské oko stačí 24-30 fps)
+
+## De/Muxing
+
+- **muxing** - kombinování několika singálů a datových streamů do jednoho multiplexed data streamu
+- **demuxing** - rozsekání multiplexed data streamu na jednotlivé signály, streamy
+  - každý komponent může být zpracováván zvlášť
+
+## Typický postup
+
+1) komprese:
+  - video se zkomprimuje pomocí algoritmu, stadardně H.264 (AVC) nebo H.265 (HEVC)
+  - komprese sníží velikost videa, ovšem zachová nejdůležitější aspekty kvality
+  - video se po kompresi lépe posílá po síti, streamuje
+2) multiplexing:
+  - po kompresi se video zkombinuje s ostatními signály/streamy - audio, titulky, metadata, do jednoho kontejneru
+  - výsledkem je soubor, který obsahuje vše potřebné (třeba MP4, MKV)
+
+## Kontejnery
+
+- kontejner se dělí na boxy/atomy
+  - základní jednotka
+  - má typ a velikost
+  - otevřený
+  - rozšiřitelný
+
+### MP4
+
+- ISO/EIC, standardizováno
+- dá se s ním dělat všechno: záznam, editing, přehrávání, streamování
+- části:
+  - `ftyp` - file type
+  - `mdat` - media data
+    - tady jsou ta opravdová data
+    - odkazuje na ně moov
+  - `moov` - movie atom
+    - metadata - dekódovací info
+      - :warning: je až na konci!
+    - informace o struktuře - tracks, timing ...
+
+- úplně primitivně se v něm dá hledat pomocí metadat:
+  - autor, datum a čas pořízení, titulky (musí být správně synchronizované)
+
+#### `track` - Track Atom ??
+
+- reprezentuje jedno médium (video, audio, titulky, ...)
+- `stbl` - sample table atom
+  - drží informace o samplování dat a časování medií ??
+  - ?? bordel
+  - `stsd` - jaký použít kodek
+  - `stts` - časové razítko, přiřazuje sampl ??
+  - `stsc` - samplu přiřadí čas ??
+  - `stco` - offset chunku, aby bylo jasné, kde v paměti se nachází
+
+- časová razítka
+  - oddělená pro audio/video (nebo spolu, pak hledáme nejmenší společný násobek ??)
 
 ## Komprese videa
 
 - komprese je ztrátová
 - $f_{\text{DEC}}(f_{\text{CO}}(\text{frame})) = \text{frame}$?
 - to nutně neplatí, ovšem výsledek se bude hodně blížit původnímu snímku
-- lidé nejsou dokonalí, tak si můžeme dovolit samplovat video 30 fps a neřěšit
-- redundance:
-  - nepotřebujeme stejné snímky za sebou kódovat jako dva různé (pozor, detekce takových případů je výpočetně drahá!)
-  - nebo stejné pixely ??
+- lidé nejsou dokonalí, tak si můžeme dovolit samplovat video 30 fps a neřešit $\rightarrow$ redundance, té lze využít v kompresi videa
+- kvantizace frekvenčních domén (q-levels) $\rightarrow$ jpeg
 
 ### Coding units and partitions
 
 - snímky od sebe lze odečítat, abychom detekovali stejné. ve videu to ovšem nelze, protože se snímky za sebou nejsou vždy **úplně stejné**, přestože se tak mohou jevit
 - je potřeba rozdělit si snímek na menší části (většinou čtverce, někdy obdélníky) a řešit v každém zvlášť
+
+- AVC - makrobloky, čtverce $16 \times 16$
+- HEVC - sofistikovanější
 - **coding quad tree**
   - rekurzivní rozdělení snímku na menší a menší oblasti
+  - největší $64 \times 64$ px, nejmenší $4 \times 4$ px
   - čím větší detail, tím menší čtverec
   - čtverce, které jsou stejné jako v předchozím snímku teoreticky můžeme zkopírovat (a ušetřit tak paměť)
   - ![](images/quad_tree.png)
 
 ### INTRA picture prediction, vnitřní
 
-- na základě souvislostí mezi již vytvořenými pixely extrapoluje hodnotu dalšího pixelu
-- video editing SW chtějí intra-frame-only kódování
-- predikce na základě směru pixelů
+- na základě souvislostí mezi již vytvořenými pixely hádá hodnotu dalšího pixelu
+- video editing SW chtějí intra-frame-only kódování (mjpeg)
+- predikce na základě směru pixelů; AVC má 9, HVEC 30
 
 ![](images/direction_prediction.png)
 
+#### JPEG-like přístup
+
+- RBG $\rightarrow$ YCbCr $\rightarrow$ Chroma subsampling $\rightarrow$ F-Domain $\rightarrow$ kvantizace $\rightarrow$ entropy encoding
+- **YCbCr**
+  - Y, luminance - celkový jas/intenzita každého jednoho pixelu
+  - Cb, chrominance blue - odchylka barvy od šedé na modré ose, pozice barvy mezi modrou a žlutou
+  - Cr, chrominance red - odchylka barva od šedé na červené ose, pozice barvy mezi červenou a cyan
+- **entropy coding**
+  - komprese dat
+  - časté symboly jsou reprezentovány co nejkratšími *codes*
+  - méně časté symboly jsou reprezentovány delšími *codes*
+  - třeba pomocí Huffmana
+
+
 ### INTER picture prediction, vnější
+
 - předpověď na základě předchozích snímků, snaží se najít podobný vzor/čtverec a ten použít k rekonstrukci sebe sama. tím výrazně šetří paměť
 
 #### Odhad pohybu (motion estimation):
@@ -87,29 +223,11 @@
   - MP3 - revoluce pro web
   - AAC - následník MP3, mnohem lepší pro nízký bitrate, používá jej Apple a Android
 - encoderu se nachází část *Psychoacoustic model*, kterou lze konfigurovat podle reálných sluchových schopností člověka - neuvažovat vysoké/nízké frekvence, maskování, ... Nastavení je možné měnit dynamicky.
+
+- **maskování**
+  - jeden zvuk výrazně zhoršuje vnímání jiného zvuku
+  - maskování je způsobeno nedokonalostí lidského sluchového aparátu
   
-## Containery
-
-TODO:
-
-- MP4
-  - ISO/EIC
-  - otevření a rozšiřitelný formát
-  - podporuje hromadu věcí: titulky, audio/video streamy, meta-data, náhledové obrázky
-  - podporuje codey: H.264, H.265, AAC
-  - dá se s ním dělat všechno: záznam, editing, přehrávání, streamování
-  - základní části
-  
-- proč je komprese důležitá?
-  - raw data mají několik MB / s
-  - bitarate = počet bitů použitých k reprezentaci dat za čas
-- muxing / demuxing
-  - muxing je ... kombinuje inputy jako video a audio a komprimuje je do containeru
-  - demuxing je opak, vytahuje z containeru audio, video atd.
-- encoding / decoding
-  - encoding je zakódování a většinou komprese nějakého audio, video vstupu do nějakého standardního formátu
-  - decoding je opak
-
 # Similarity search
 
 - různé přístupy k reprezentaci videa k vyhledávání:
@@ -180,10 +298,12 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 
 - je potřeba, aby obrázky byly předem nějak otagované. vlastně to znamená "1 - počet sdílených vlastností / počet vlastností dohromady", případně "1 - overlap / společná plocha"
 
-<p float="middle">
+<center>
+<p>
   <img src="https://upload.wikimedia.org/wikipedia/commons/2/2d/Intersection_over_Union_-_object_detection_bounding_boxes.jpg" width =250/>
   <img src="https://upload.wikimedia.org/wikipedia/commons/c/c7/Intersection_over_Union_-_visual_equation.png" width=250/>
 </p>
+</center>
 
 ## Použití vzdáleností při dotazování
 
@@ -238,7 +358,9 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - nahraje se obrázek (3 vrstvy, RGB)
 - aplikuje se **konvoluční filtr** ($n \times m$), který skáče po $k$ pixelech z toho máme nový vektor
 - takových filtrů se aplikuje několik
-- aplikuje se **pooling** - snižuje dimenze (down sampluje) nově získané features
+- aplikuje se **pooling**
+  - snižuje dimenze (down sampluje) nově získané features
+  - díky tomu je model odolný vůči posunu
 - znova se aplikují konvoluční filtry
 - znova pooling
 - ...
@@ -276,12 +398,30 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 
 - každý obrázek je popsaný lokálními deskriptory ($v_i \in \mathbb{R}^{128}$)
 - $v_i$ popisuje obsah vybraného subobrázku kolem detekovaného klíčového bodu
+  - klíčový bod a prostor kolem něj jsou odolné vůči škálování, rotaci a změně úhlu pohledu, šumu, osvětlení ...
+  - takové body jsou většinou hranice objektů (prostě významné edges)
+  - zároveň je důležité, že jsou body vůči sobě stále stejně relativně umístěny
+  - obecně má problém s předměty, které mezi snímky mění tvar (špatně snáší změny geometrie); v praxi se používá tolik bodů, že se takovéto chyby eliminují
+- právě proto, že odolává většině možných transformací, je schopen detekovat i částečně zakryté objekty
 - podobnost obrázků lze zjistit párováním popiaovač jednoho na popisovače druhého, problémem je, že je to časově náročné
+
+#### Výroba klíčových bodů
+
+- [všechno lépe tu](https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/AV0405/MURRAY/SIFT.html)
+
+1) *scale space extrema* - tipovačka s Gaussovskou, jaké body by mohly být významné (složitá matika)
+2) vyřazení bodů s nízkým kontrastem
+3) vyfiltrování bodů, které se nachází na hraně, ovšem nachází se tam v dost nešťastné pozici
+
+![](https://upload.wikimedia.org/wikipedia/commons/4/44/Sift_keypoints_filtering.jpg)
+
+4) každému bodu se přiřadí jedna nebo více orientací na základě lokálních gradientů (invariance vůči rotaci)
 
 ### Jak reprezentovat klíčový bod
 
 - grid pixelů fixní velikosti kolem klíčového bodu
 - gradienty jako 8-chlívkové histogramy
+- popis orientace pro každý pixel, pak se nějak sečtou ??
 
 ?? tady se ztrácim af
 
@@ -315,6 +455,16 @@ $$\left(\begin{array}{}
 $$
 
 - samozřejmě se může stát, že transformace aplikované na objekt nejsou lineární. proto je potřeba nechat matchování nějakou wigle room. odchylky předpokládanýych bodů spočteme jako eukliodvskou vzdálenost a omezíme ji nějakým číslem zeshora.
+
+- na výpočet se používá výborná věc z Lineární algebry I a II:
+
+$$
+\begin{align*}
+  A\mathbf{\hat{x}} &\approx\mathbf{b} \\
+  A^TA\mathbf{\hat{x}} &= A^T\mathbf{b} \\
+  \mathbf{\hat{x}} &= (A^TA)^{-1}A^T\mathbf{b}
+\end{align*}
+$$
 
 # Střihy ve videu
 
@@ -631,7 +781,7 @@ $$
 
 #### Více dimenzionální objekty
 
-- ⚠️ stále třídíme v 1D array do 1D arraye, objekty mají více dimenzí
+- :warning: stále třídíme v 1D array do 1D arraye, objekty mají více dimenzí
 - vícedimenzionální data (jako třeba RGB barvy) se nedají rozumně třídit
   - kdyby se to dělalo nejdřív podle R, pak podle G, pak podle B, tak nemáme zaručeno, že dvě podobné barvy (podle lidského úsudku, podobnost může být cokoliv, co si zadefinujeme, že) skončí vedle sebe
 - nestačí jen se zeptat $s > t$ pro dva objekty

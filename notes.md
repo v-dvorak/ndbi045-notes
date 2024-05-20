@@ -290,11 +290,10 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - pro větší databáze je potřeba obrázky v databázi rozumně indexovat (předtřízení, rychlé vyhledávání ...)
 - může se dost dobře stát že hledaný objekt je v obrázku trochu posunutý, otočený ..., je potřeba počítat i s tím. klíčové body na sebe můžeme namatchovat, jestliže existuje řešení rovnice:
 
-$$
-\left(\begin{array}{}
+$$\left(\begin{array}{}
   x & y & 0 & 0 & 1 & 0 \\
   0 & 0 & x & y & 1 & 0 \\
-  &&\vdots
+  &&\vdots &&&
 \end{array}\right)
 \left(
   \begin{array}{}
@@ -305,8 +304,7 @@ $$
     t_x \\
     t_y
   \end{array}
-\right)
-=
+\right) =
 \left(
   \begin{array}{}
     u \\

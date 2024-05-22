@@ -1,6 +1,35 @@
+
+<!-- omit in toc -->
+# Vyhledávání ve videu (NDBI045)
+
+poslední update: 22. 5. 2024
+
+:warning: - na tohle bacha
+
+:question: - tady moc netušim, co se děje, je potřeba doplnit
+
+<!-- omit in toc -->
+# Obsah
+
+- [Video formáty, základ](#video-formáty-základ)
+- [Ukládání a sdílení multimédií](#ukládání-a-sdílení-multimédií)
+- [Similarity search](#similarity-search)
+- [Global Image Descriptor](#global-image-descriptor)
+- [2012 game changer](#2012-game-changer)
+- [Local Image Descriptors](#local-image-descriptors)
+- [Střihy ve videu](#střihy-ve-videu)
+- [od roku 2012](#od-roku-2012)
+- [Základy neuronových sítí](#základy-neuronových-sítí)
+- [Multi-modal search](#multi-modal-search)
+- [Temporal query](#temporal-query)
+- [Interactive search](#interactive-search)
+- [Vizualizace](#vizualizace)
+
+<div style="page-break-after: always;"></div>
+
 # Video formáty, základ
 
-## Analog $\rightarrow$ digital
+## Analog → digital
 
 - digitální video - posloupnost obrázků
 - zvuk - příčné kmitání vzduchu
@@ -28,7 +57,7 @@
 
 - chyba při samplování
 
-![](https://upload.wikimedia.org/wikipedia/commons/8/8c/Po_deseti_minut%C3%A1ch.gif)
+![](https://upload.wikimedia.org/wikipedia/commons/8/87/Po_pades%C3%A1ti_minut%C3%A1ch.gif)
 
 - hodiny jsou snímané po 50 minutách a vypadá, jako kdyby se ručička točila protisměru
 - dá se mu částečně zabránit viz [jak samplovat správně](#jak-samplovat-správně)
@@ -57,6 +86,8 @@
   - obrázek s detaily - jemné samplování, hrubé kvantování
   - obrázek s věrnými barvami - jemné kvantování, hrubé samplování
 
+<div style="page-break-after: always;"></div>
+
 # Ukládání a sdílení multimédií
 
 - **multi**medium $\rightarrow$ sposuta částí
@@ -67,8 +98,8 @@
 
 ## CoDec
 
-- **coder, decoder** - de/komprese
-- decoder vezme sekvenci bitů a vytvoří z nich bitmapy, které se pošlou na zobrazovacé zařízení, coder dělá přesný opak
+- **coder, decoder** - komprese/dekomprese
+- decoder vezme sekvenci bitů a vytvoří z nich bitmapy, které se pošlou na zobrazovací zařízení, coder dělá přesný opak
 - populární formáty: H.264, H.265
 - **frame rate** - počet bitmap za sekundu (pro lidské oko stačí 24-30 fps)
 
@@ -89,6 +120,8 @@
   - výsledkem je soubor, který obsahuje vše potřebné (třeba MP4, MKV)
 
 ## Kontejnery
+
+- :warning: tato kapitola trpí nedostatky i nejasnostmi
 
 - kontejner se dělí na boxy/atomy
   - základní jednotka
@@ -113,19 +146,22 @@
 - úplně primitivně se v něm dá hledat pomocí metadat:
   - autor, datum a čas pořízení, titulky (musí být správně synchronizované)
 
-#### `track` - Track Atom ??
+- z dodatků, kterým ale skoro nikdo nerozumí:
+  - na 1 sekundu máme 30 videosamplů a 40k audiosamplů - to je potřeba o timestampovat, aby bylo jasné, co k čmeu patří
+
+#### `track` - Track Atom :question:
 
 - reprezentuje jedno médium (video, audio, titulky, ...)
 - `stbl` - sample table atom
-  - drží informace o samplování dat a časování medií ??
-  - ?? bordel
+  - drží informace o samplování dat a časování medií :question:
+  - :question: bordel
   - `stsd` - jaký použít kodek
-  - `stts` - časové razítko, přiřazuje sampl ??
-  - `stsc` - samplu přiřadí čas ??
+  - `stts` - časové razítko, přiřazuje sampl :question:
+  - `stsc` - samplu přiřadí čas :question:
   - `stco` - offset chunku, aby bylo jasné, kde v paměti se nachází
 
 - časová razítka
-  - oddělená pro audio/video (nebo spolu, pak hledáme nejmenší společný násobek ??)
+  - oddělená pro audio/video (nebo spolu, pak hledáme nejmenší společný násobek :question:)
 
 ## Komprese videa
 
@@ -147,7 +183,10 @@
   - největší $64 \times 64$ px, nejmenší $4 \times 4$ px
   - čím větší detail, tím menší čtverec
   - čtverce, které jsou stejné jako v předchozím snímku teoreticky můžeme zkopírovat (a ušetřit tak paměť)
-  - ![](images/quad_tree.png)
+  
+  ![](images/quad_tree.png)
+
+<div style="page-break-after: always;"></div>
 
 ### INTRA picture prediction, vnitřní
 
@@ -170,6 +209,7 @@
   - méně časté symboly jsou reprezentovány delšími *codes*
   - třeba pomocí Huffmana
 
+<div style="page-break-after: always;"></div>
 
 ### INTER picture prediction, vnější
 
@@ -179,17 +219,19 @@
 
 - předpověď pohybu pixelů/čtverců a následná kompenzace tohoto pohybu
 - Pokud je algoritmus úspěšný a najde podobný blok v referenčním snímku, pak je současný blok zakódován jako vektor pohybu. Ten ukazuje na blok v referenčním snímku.
-- nalezený blok se často neshoduje úplně, encoder spočte jejich rozdíl (jak ??). tomu se říká **residual** nebo taky *prediction error*, s touto chybou poté ?? nějak pracuje i decoder
+- nalezený blok se často neshoduje úplně, encoder spočte jejich rozdíl (jak :question:). tomu se říká **residual** nebo taky *prediction error*, s touto chybou poté :question: nějak pracuje i decoder
 - TLDR: encoder (jeho prediction unit) najde podobné dva bloky -> spočte jejich motion vector (který ukazuje na referenční blok) a prediction error (residual) -> decoder umí z těchto informací dostat raw pixel data pro rekonstrukci obrazu
 
 ![](https://upload.wikimedia.org/wikipedia/commons/a/a2/Interframe_prediction.png)
 
 - musí platit: $c(\text{motion info}) + c(\text{residual}) < c(\text{original})$
-  - že vektor s informací o pohybu + informace o chybě (aka to, co spočte ten encoder) je menší informace o raw složení té části obrázku, kterou se snažíme optimalizovat
+  - že vektor s informací o pohybu + informace o chybě (aka to, co spočte ten encoder) je na bity menší než raw informace
   - když nám algoritmus spočítá super referenci z předchozího snímku, ale zakóduje ji tak, že je větší než raw nezměněná informace, tak je to k ničemu
   - (tohle je důležitý z prezentace, ale abych zjistil, co to znamená, tak jsem musel přečíst celou wiki, lol)
   - přesnost v sub-pixelech, obvykle 1/4, 1/2
     - to hodně zjednodušeně znamená: Pracujeme ve vyšším rozlišení, než ve kterém je původní obrázek, a to tak, že si doplníme chybějící pixely pomocí průměrování ostatních okolo. Víc na [StackExchange](https://dsp.stackexchange.com/questions/34103/subpixel-what-is-it).
+
+<div style="page-break-after: always;"></div>
 
 #### GoP - Group of Pictures
 
@@ -200,11 +242,11 @@
 
 ![](https://upload.wikimedia.org/wikipedia/commons/7/7b/IBBPBB_inter_frame_group_of_pictures.svg)
 
-- Stadarně GoP vypadá jako `IBBPBBI ...`. Kde se nejdříve vytvoří `P` z `I` a následně se mezi ně a podle nich vytvoří dva `B` snímky.
-- Super je, že struktura je efektivní na spotřebovanou paměť. ALE! snímky se nevyrábí chronologicky, je někde potřeba držet `P` snímek, než vyrobíme a pošleme dva `B` snímky.
+- Stadarně GoP vypadá jako `IBBPBBI...`. Kde se nejdříve vytvoří **P** z **I** a následně se mezi ně a podle nich vytvoří dva **B** snímky.
 
 #### Plusy a mínusy:
 
+- Super je, že struktura je efektivní na spotřebovanou paměť. ALE! snímky se nevyrábí chronologicky, je někde potřeba držet **P** snímek, než vyrobíme a pošleme dva **B** snímky.
 - velmi efektivně snižuje velikost uložených dat, ukládají se pouze změny ve snímcích
 - Snímky jsou na sobě navzájem závislé, to může způsobit problémy při přenosu po síti. Zároveň chyba z jednoho odhadu propagovat skrz sérii snímků a postupně se zhoršovat.
 - právě kvůli propagaci chyb se používá I-frame, který intra coded, tedy vždy může být dekódován bez závislosti na ostatních. je to takový pevný bod ve změti předpovědí. kdyby se náhodou něco pokazilo, tak tohle je odrazový můstek pro nový start bez chyb.
@@ -214,6 +256,8 @@
 - časově hodně náročné, mohou pomoct heuristiky
 - rozdělovat reference mezi obrázky na menší bloky (pak se mohou zpracovávat paralelně, protože na sobě navzájem nesouvisí)
 - filtry, které odstraní artefakty komprese
+
+<div style="page-break-after: always;"></div>
 
 ## Komprese audia
 
@@ -227,12 +271,14 @@
 - **maskování**
   - jeden zvuk výrazně zhoršuje vnímání jiného zvuku
   - maskování je způsobeno nedokonalostí lidského sluchového aparátu
-  
+
+<div style="page-break-after: always;"></div>
+
 # Similarity search
 
 - různé přístupy k reprezentaci videa k vyhledávání:
   - video - všechny snímky
-  - shots - uvažování záběrů ve videu samostatně
+  - shots - záběry ve videu
   - representative frames - jeden reprezentativní snímek z každého videa/záběru
   
 - motivace pro různé přístupy:
@@ -256,12 +302,12 @@
 
 ## Reprezentace podobnosti pomocí vektorů
 
-- získání featur, **funkce**, která každému obrázku z databáze přiřadí $D$-dimenzionální vektor:
+- získání featur, **funkce**, která každému obrázku z databáze $DB$ přiřadí $D$-dimenzionální vektor:
   
 $$f_e : DB \rightarrow U_D$$
 
 - vzdálenost dvou vektorů featur (jak moc jsou si featury podobné), funkce, která každé dvojici vektorů přiřadí nějaké kladné reálné číslo:
-- 
+
 $$\delta : U_D \times U_D \rightarrow \mathbb{R}_0^+$$
 
 - chtěli bychom, aby platili alespoň nějaké vlastnosti metriky:
@@ -317,6 +363,8 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 
 ![](images/distance_query.png)
 
+<div style="page-break-after: always;"></div>
+
 # Global Image Descriptor
 
 ## Histogramy
@@ -343,6 +391,8 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - histogramy lze vytvářet také pro video
   - lze sloučit features více snímků do jednoho histogramu
   - nebo sloučit více histogramů ze snímků do jednoho vektoru
+
+<div style="page-break-after: always;"></div>
 
 # 2012 game changer
 
@@ -380,6 +430,8 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - filtry mají váhy, ty se dají trénovat, v tom spočívá užitečnost CNN
 - podobně jako třeba u MLP (multi-layer perceptron) je model schopen pomocí základních stavebních bloků reprezentovat složitější struktury v hlubších vrstvách sítě
 
+<div style="page-break-after: always;"></div>
+
 # Local Image Descriptors
 
 - globální hledání není vhodné prp všechny tasky
@@ -413,17 +465,23 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 2) vyřazení bodů s nízkým kontrastem
 3) vyfiltrování bodů, které se nachází na hraně, ovšem nachází se tam v dost nešťastné pozici
 
-![](https://upload.wikimedia.org/wikipedia/commons/4/44/Sift_keypoints_filtering.jpg)
+![](images/sift_keypoints.jpg)
 
 4) každému bodu se přiřadí jedna nebo více orientací na základě lokálních gradientů (invariance vůči rotaci)
 
 ### Jak reprezentovat klíčový bod
 
-- grid pixelů fixní velikosti kolem klíčového bodu
-- gradienty jako 8-chlívkové histogramy
-- popis orientace pro každý pixel, pak se nějak sečtou ??
+- klíčovému bodu se přiřadí vektor orientace (orientací)
+- teď chceme pro bod spočítat *descriptor vector*
+- spočteme pro něj orientované histogramy (s q-levels = 8)
+- (s těmi se pak dál pracuje, ale to je (snad) mimo scope předmětu)
+- *descriptor* je pak vektor všech těchto histogramů (shape vektoru je $(128,)$), vektor ještě normalizujeme
+- pak se aplikuje nějaký (empiricky zvolený) threshold a znova se normalizuje
 
-?? tady se ztrácim af
+:question: tady se ztrácim af
+
+
+![](images/img_descriptor.png)
 
 ### Jak to na sebe matchovat
 
@@ -466,6 +524,14 @@ $$
 \end{align*}
 $$
 
+### Použití
+
+- object recognition
+- image alignment
+- panorama stitching
+
+<div style="page-break-after: always;"></div>
+
 # Střihy ve videu
 
 - hard/soft cuts, šum v datech, neurčitost
@@ -477,7 +543,7 @@ $$
 - end-to-end DL přístup (end-to-end = pustim to a neřešim nic):
   - 3D konvoluční sítě
 
-- hodnocení modelu podle accuracy, precision a recal
+- hodnocení modelu podle accuracy, precision a recall
 
 
 $$\begin{align*}
@@ -487,21 +553,23 @@ $$\begin{align*}
   \implies F_1 &= \frac{2TP}{2TP + FP + FN}
 \end{align*}$$
 
-## od roku 2012
+<div style="page-break-after: always;"></div>
 
-- DL a CNN dominují analýzu videa/audia
+# od roku 2012
+
+- DL a CNN dominují analýzu videa/audia (deep learning, convolutional neural networks)
 - rychlé, efektivní a poměrně spolehlivé řešení usnaďnují použití v průmyslu (dnes jsou nejčastějšími aplikacemi: object detection, image classsification, object classification, semantic segmentation)
 
 # Základy neuronových sítí
 
 - cílem je klasifikovat co nejvíce příkladů správně
 - AlexNet kombinuje několik základních stavebních bloků:
-  - hustá/FC vrstva:
+  - hustá/FC (fully connected) vrstva:
     - má |input| $\times$ |output| vah
     - softmax (nebo jiná podobná funkce) na poslední vrstvě
   - konvoluční vrstva pro filtr (idk, českej překlad je fakt divnej)
     - rozlišení filtru je $m \times n$
-    - váhy filtra jsou sdílené s *neuron grid* ??
+    - váhy filtrů jsou sdílené s *neuron grid* :question:
     - často $2^k$ filtrů $\rightarrow 2^k$ kanálů
   - spatial pooling
     - redukce rozlišení (aby ten vektor nebyl velkej jak debil)
@@ -515,6 +583,15 @@ $$\begin{align*}
 - revoluce v roce 2015: ResNET
   - velkou změnou je, že se výsledky vrstev propagují i dále než do první následující
   - po odstranění poslední vrstvy (která mapuje spočtené vektory na naučené třídy) se dá output použít pro similarity search
+
+## ResNET
+
+- *residual connection*
+  - výstup vrstvy je použit jako vstup o několik vrstev v budoucnosti
+  - zásadně boří představu o sítích z předešlých let (že výstup jedné vrstvy je vstupem další)
+- vyšší desítky vrstev
+
+![](https://upload.wikimedia.org/wikipedia/commons/b/ba/ResBlock.png)
 
 TODO: jak funguje ResNET
 
@@ -531,7 +608,7 @@ TODO: jak funguje ResNET
 - region proposal network + shared feature maps
   - RPN je neuronová síť, která umí navrhovat, kde se na obrázku nacházejí nějaké objekty a jak moc to jsou objekty
 - RPN lze plně integrovat do CNN a mít tak end-to-end model
-- případně můžeme CNN natvrdo říct, kam chceme, aby se díval při předpovědích ??
+- případně můžeme CNN natvrdo říct, kam chceme, aby se díval při předpovědích :question:
 
 ### R-CNN - region proposals with CNN
 
@@ -544,7 +621,7 @@ TODO: jak funguje ResNET
 #### ImageNet
 
 - obrázky pro slova uspořádaná ve WordNet hiearchii
-  - WordNet - hiearchii, kde na každém levelu synonymum ??
+  - WordNet - hiearchii, kde na každém levelu synonymum :question:
 
 ![](images/wordnet.png)
 
@@ -553,16 +630,42 @@ TODO: jak funguje ResNET
 #### COCO dataset
 
 - 330 000 obrázků
-- 1,5 milionu objektů
+- 1,5 milionu objektů (aka bboxy s classou)
 - 80 kategorií
+
+## Neuronové sítě TLDR
+
+- neuronová síť je skoro funkce (pokud je deterministická :question:)
+- mnoho hyperparametrů
+- základem je trénování a velkou výhodou snadná rozšiřitelnost
+- aproximuje funkce pomocí velké armády neuronů
+- průlom v roce 2012 s AlexNET
+  - konvoluční masky, FC vrstvy na konci
+- ResNET
+  - vyšší desítky, nižší stovky konvolučních vrstev
+  - *residual connection* - přeskakování vrstev
+- klasifikace objektů v obrázku pomocí R-CNN
+  - predikce **R**egionů, návrhy oblasatí na prozkoumání pro CNN
+- YOLO se obejde bez regionů :question: (idk, píšu na to bakalářku a nevim, lol)
+
+<div style="page-break-after: always;"></div>
 
 # Multi-modal search
 
 - pro similiar hledání můžeme modalitu $M$ formalizovat jako $(\delta _M, f_{eM})$
-- pak vyhledávací systém/algoritmus spočítá vzdálenosti mezi dotazem a všemi objekty v databázi
+  - aka modalita je fce extrakce a vzdálenosti
+- pak vyhledávací systém/algoritmus spočítá vzdálenosti mezi dotazem a všemi objekty v databázia seřadí je
+  - vhodné modality: :question: dost random sekce
+    - rgb histogram:
+      - den/noc
+      - detekce střihu
+      - rozhodně neumí rozlišovat objekty
+  - jak hodnotit modality?
+    - precision = # relevantních / velikost výsledku, TP / (TP + FP)
+    - recall = TP / (TP + FN)
+      - kolik hledaných objektů ze všech objektů najdu
+    - precision jako funkce recall nám dávat odhad toho, kolik výsledků musíme zobrazit, abychom viděli $x$ \% chtěných výsledků
 - pro velké datasety je potřeba data rozumně indexovat, abychom mohli hledat v reálném čase
-
-slide 75 wtf ??
 
 - videodata maj tu skvělou výhodu, že je tam spousta modalit, které se dají použít pro třízení:
   - kanály barev
@@ -585,6 +688,8 @@ slide 75 wtf ??
 ## Mono vs. Multi-modal
 
 - hledání nejbližších výsledků podle jednoho/více feature deskriptorů
+
+<div style="page-break-after: always;"></div>
 
 # Temporal query
 
@@ -617,7 +722,7 @@ $$
 - classification based search:
   - z textu dotaazu se použijí pouze jjména naučených tříd, search engine rankuje obrázk podle skóre jednotlivých hledaných tříd
 - joint embedding based search
-  - ???
+  - reprezentace dat pomocí více modalit ve sdíleném prostoru featur
 - contrastive loss vs triplet loss to train model
   - constrastive:
     - podobná data jsou u sebe, různá jsou od sebe naopak co nejdále
@@ -672,6 +777,8 @@ $$
 - robustní pro různá data
   - výborně abstrahuje, rozšiřitelnost
 
+<div style="page-break-after: always;"></div>
+
 # Interactive search
 
 - vyhledávání je pro uživatele
@@ -713,11 +820,20 @@ $$
 
 ### Bayes update
 
+:question: wtf
+
 - ukážeme uživateli náhodný obrázek/obrázky podle textového vyhledávání
 - uživatel vybere nejlepší obrázek (ten máme v historii hledání)
   - více iterací algoritmu $\rightarrow$ větší historie
 
-?? wtf
+- update hledání:
+  - $P$(pravděpodobnost, že hledaný obrázek je aktuálně zobrazen | dotaz, display, historie)
+
+- v čem je to dobrý?
+  - můžeme uživateli nabídnout i obrázky, které neskórovaly vysoko, abychom se ujistili, že hledáme dobře
+  - chceme na uživateli otestovat co nejvzdálenější obrázky (těm, co si myslíme, že hledá), abychom mohli zamítnout co největší počet možností
+
+<div style="page-break-after: always;"></div>
 
 # Vizualizace
 
@@ -795,14 +911,14 @@ $$
 
 - kde $\text{Gauss}(\cdot)$ je normalizovaná Gaussova funkce a $B_i$ je počet objektů v $B_i$
 
-- čili je to gaussovkou přenásobený průměr bloku samotného + průměr bloku nad a pod, tohle je kvůli tomu, aby přechody nebyly tak ostré a lépe to vypadadlo (-> kdyby target vektor byl jenom přes jeden blok, byly by ty přechody ostřejší ??)
+- čili je to gaussovkou přenásobený průměr bloku samotného + průměr bloku nad a pod, tohle je kvůli tomu, aby přechody nebyly tak ostré a lépe to vypadadlo (-> kdyby target vektor byl jenom přes jeden blok, byly by ty přechody ostřejší :question:)
 - objekty prohazujeme stejně jako v 1D příkladu, dva objekty $s,t$ **ze dvou sousedních bloků** $B_i, B_{i+1}$ se prohodí, pokud minimalizují funkci:
 
 $$
 \argmin_{(s,t)} (\|s - T_i\| + \|t - T_{i+1}\|)
 $$
 
-- kde $\|a-b\|$ je (třeba ??) euklidovská vzdálenost vektorů $a,b$
+- kde $\|a-b\|$ je (třeba :question:) euklidovská vzdálenost vektorů $a,b$
 - tento test se provede pro všechny dvojice, pro nové rozložení objektů v blocích se spočítají nové target vektory
 - to se opakuje, dokud výpočet nekonverguje (nedojde k žádnému prohození)
 - (podobá se k-means algoritmu, akorát tohle hejbe data mezi bloky o fixní velikosti)
@@ -832,6 +948,7 @@ $$
 
 - párování:
   - pro rozřazení objektů do jedné ze čtyř podmatic, objekty z prvního bloku spárujeme s odpovídajícími objekty v ostatních blocích, vytvoříme tak několik čtveřic $(s, t, u, v)$ (všechny čtveřice objektů vyhodnocujeme paralelně)
+
   ![](images/ssm_a.png)
   - vygenerujeme všech 24 možností a pokusíme se minimalizovat funkci:
 
@@ -839,11 +956,13 @@ $$
 \def\d#1#2#3{\delta(#1, T_{i#2,j#3})}
 \argmin_{(s, t, u, v)} = \d{s}{}{} + \d{t}{+1}{} + \d{u}{}{+1} \d{v}{+1}{+1}
 $$
-- zkoušíme všechny čtveřice zvlášť, abychom se nezasekli v lokálním optimu ??
+- zkoušíme všechny čtveřice zvlášť
 
 - rozdělíme na poloviční čtverce a opět spárujeme po čtyřech
+  
   ![](images/ssm_b.png)
 - poté spárujeme trošku jinak, s offesetem 1, v podstatě nám jde o to, aby si každý jeden blok v jedné iteraci mohl prohodit objekty se všemi svými sousedy
+  
   ![](images/ssm_cd.png)
 - v párování si vygenerujeme všechny možné $n$-tice a opět minimalizujeme přes všechny možnosti
 
@@ -852,6 +971,8 @@ $$
 - tady jde hezky vidět, jak se postupně zjemňuje třízení pro $1, 4, 16, 32, ..., 2^k$ čtverečků
   
 ![](images/ssm_example.png)
+
+<div style="page-break-after: always;"></div>
 
 ## SOMs (Self-organizing Maps, Kohonen Map, Kohonen Network)
 

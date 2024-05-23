@@ -2,7 +2,7 @@
 <!-- omit in toc -->
 # Vyhledávání ve videu (NDBI045)
 
-poslední update: 22. 5. 2024
+poslední update: 23. 5. 2024
 
 :warning: - na tohle bacha
 
@@ -121,7 +121,7 @@ poslední update: 22. 5. 2024
 
 ## Kontejnery
 
-- :warning: tato kapitola trpí nedostatky i nejasnostmi
+- :warning: tato kapitola trpí nedostatky i nejasnostmi, při zkoušce je potřeba detailně znát složení MP4
 
 - kontejner se dělí na boxy/atomy
   - základní jednotka
@@ -146,8 +146,8 @@ poslední update: 22. 5. 2024
 - úplně primitivně se v něm dá hledat pomocí metadat:
   - autor, datum a čas pořízení, titulky (musí být správně synchronizované)
 
-- z dodatků, kterým ale skoro nikdo nerozumí:
-  - na 1 sekundu máme 30 videosamplů a 40k audiosamplů - to je potřeba o timestampovat, aby bylo jasné, co k čmeu patří
+- :question: z dodatků, kterým ale skoro nikdo nerozumí:
+  - na 1 sekundu máme 30 videosamplů a 40k audiosamplů - to je potřeba o timestampovat, aby bylo jasné, co k čemu patří
 
 #### `track` - Track Atom :question:
 
@@ -372,9 +372,11 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - třeba pomocí histogramů, to je 256 hodnot na jednu barvu, to je dost
 - jde zlepšit pomocí řazení pixelů do chlívků (nerozlišujeme 256 barev v kanálu, ale třeba jen 8)
   - **hard assignment** - pixel padá do jednoho chlívku
-  - ![](images/hard_assignment.png)
-  - **soft assignment** - pixel padá do více chlívků 
-  - ![](images/soft_assignment.png)
+  
+    ![](images/hard_assignment.png)
+  - **soft assignment** - pixel padá do více chlívků
+  
+    ![](images/soft_assignment.png)
 - další možné úpravy:
   - škálování obrázku
   - hrubší q-levels (počet chlívků pro jeden kanál)
@@ -434,8 +436,8 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 
 # Local Image Descriptors
 
-- globální hledání není vhodné prp všechny tasky
-- občas prostě chceme najít něco ve scéne a ne scénu, nebo třeba trackovat předmět mezi snímky
+- globální hledání není vhodné pro všechny tasky
+- občas prostě chceme najít něco ve scéně a ne scénu, nebo třeba trackovat předmět mezi snímky
 - takový model musí být robustní:
   - odolávat změnám nasvícení a zabarvení atd., třeba a i částečnímu zakrytí předmětu
   - nesmí ho zmást škálování, otočení ani posunutí obrázku
@@ -455,7 +457,7 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
   - zároveň je důležité, že jsou body vůči sobě stále stejně relativně umístěny
   - obecně má problém s předměty, které mezi snímky mění tvar (špatně snáší změny geometrie); v praxi se používá tolik bodů, že se takovéto chyby eliminují
 - právě proto, že odolává většině možných transformací, je schopen detekovat i částečně zakryté objekty
-- podobnost obrázků lze zjistit párováním popiaovač jednoho na popisovače druhého, problémem je, že je to časově náročné
+- podobnost obrázků lze zjistit párováním deskriptoru jednoho na deskriptor druhého, problémem je, že je to časově náročné
 
 #### Výroba klíčových bodů
 
@@ -479,7 +481,6 @@ $$1 - \frac{|X \cap Y|}{|X \cup Y|}$$
 - pak se aplikuje nějaký (empiricky zvolený) threshold a znova se normalizuje
 
 :question: tady se ztrácim af
-
 
 ![](images/img_descriptor.png)
 
@@ -563,20 +564,23 @@ $$\begin{align*}
 # Základy neuronových sítí
 
 - cílem je klasifikovat co nejvíce příkladů správně
-- AlexNet kombinuje několik základních stavebních bloků:
-  - hustá/FC (fully connected) vrstva:
-    - má |input| $\times$ |output| vah
-    - softmax (nebo jiná podobná funkce) na poslední vrstvě
-  - konvoluční vrstva pro filtr (idk, českej překlad je fakt divnej)
-    - rozlišení filtru je $m \times n$
-    - váhy filtrů jsou sdílené s *neuron grid* :question:
-    - často $2^k$ filtrů $\rightarrow 2^k$ kanálů
-  - spatial pooling
-    - redukce rozlišení (aby ten vektor nebyl velkej jak debil)
-    - často zmenšení o jednu polovinu
-    - často maximální hodnota nebo průměrná okolí, co se zrovna redukuje
-    - output je jaksi zmenšení obrázek
   
+## AlexNET
+
+- kombinuje několik základních stavebních bloků:
+- hustá/FC (fully connected) vrstva:
+  - má |input| $\times$ |output| vah
+  - softmax (nebo jiná podobná funkce) na poslední vrstvě
+- konvoluční vrstva pro filtr (idk, českej překlad je fakt divnej)
+  - rozlišení filtru je $m \times n$
+  - váhy filtrů jsou sdílené s *neuron grid* :question:
+  - často $2^k$ filtrů $\rightarrow 2^k$ kanálů
+- spatial pooling
+  - redukce rozlišení (aby ten vektor nebyl velkej jak debil)
+  - často zmenšení o jednu polovinu
+  - často maximální hodnota nebo průměrná okolí, co se zrovna redukuje
+  - output je jaksi abstrakce obrázku
+
 ## Image classification
 
 - přiřadí celému obrázku jednu z podporovaných tříd
@@ -587,13 +591,15 @@ $$\begin{align*}
 ## ResNET
 
 - *residual connection*
-  - výstup vrstvy je použit jako vstup o několik vrstev v budoucnosti
+  - výstup vrstvy je použit jako vstup jiné vrstvy v budoucnosti
   - zásadně boří představu o sítích z předešlých let (že výstup jedné vrstvy je vstupem další)
 - vyšší desítky vrstev
 
 ![](https://upload.wikimedia.org/wikipedia/commons/b/ba/ResBlock.png)
 
-TODO: jak funguje ResNET
+![](images/resnet.PNG)
+
+<div style="page-break-after: always;"></div>
 
 ## Object detection
 
@@ -635,8 +641,8 @@ TODO: jak funguje ResNET
 
 ## Neuronové sítě TLDR
 
-- neuronová síť je skoro funkce (pokud je deterministická :question:)
-- mnoho hyperparametrů
+- neuronová síť je funkce (pokud je deterministická :question:)
+- mnoho hyperparametrů (počet a velikost vrstev, aktivační funkce, ...)
 - základem je trénování a velkou výhodou snadná rozšiřitelnost
 - aproximuje funkce pomocí velké armády neuronů
 - průlom v roce 2012 s AlexNET
@@ -652,7 +658,7 @@ TODO: jak funguje ResNET
 
 # Multi-modal search
 
-- pro similiar hledání můžeme modalitu $M$ formalizovat jako $(\delta _M, f_{eM})$
+- pro similiarity hledání můžeme modalitu $M$ formalizovat jako $(\delta _M, f_{eM})$
   - aka modalita je fce extrakce a vzdálenosti
 - pak vyhledávací systém/algoritmus spočítá vzdálenosti mezi dotazem a všemi objekty v databázia seřadí je
   - vhodné modality: :question: dost random sekce
@@ -685,7 +691,7 @@ TODO: jak funguje ResNET
 
 ![](images/fusion.jpg)
 
-## Mono vs. Multi-modal
+## Mono vs. Multi-modal search
 
 - hledání nejbližších výsledků podle jednoho/více feature deskriptorů
 
@@ -700,7 +706,7 @@ TODO: jak funguje ResNET
 ![](images/cat_tractor.png)
 
 - pro každý snímek máme skóre, jak moc je kočka ($Q_1$) a jak moc je traktor ($Q_2$)
-- z toho můžeme spočítat skóre dvojice snímků, které jsou za sebou jako $Q_1[i] \times Q_2[i+1]$
+- z toho můžeme spočítat skóre dvojice snímků, které jsou za sebou jako $Q_1[i] \cdot Q_2[i+1]$
 
 $$
 \def\green#1{\colorbox{green}{#1}}
@@ -720,7 +726,7 @@ $$
 ### Clf based vs Joint embedding based search
 
 - classification based search:
-  - z textu dotaazu se použijí pouze jjména naučených tříd, search engine rankuje obrázk podle skóre jednotlivých hledaných tříd
+  - z textu dotaazu se použijí pouze jména naučených tříd, search engine rankuje obrázky podle skóre jednotlivých hledaných tříd
 - joint embedding based search
   - reprezentace dat pomocí více modalit ve sdíleném prostoru featur
 - contrastive loss vs triplet loss to train model
@@ -749,10 +755,15 @@ $$
 
 
 - trénován na 400 mil image caption pairs (dnes cca 5 miliard), stahování dat pomocí web scraperů a crawlerů
-- v takovém množství přestává být class clf nepoužitelná
-- obrázek jede skrz *vision transformer*, který se ho přetransformuje do embeddingu
-- text jde do *text transformeru*, který ho hodí do embeddingu
+- v takovém množství přestává být class clf použitelná
+
+### Vnitřnosti
+
+- obrázek jede skrz *vision transformer* (**ViT**), který ho přetransformuje do embeddingu
+- text jde do *text transformeru* ((**TeT**)), který ho přetransformuje do embeddingu
 - cílem je natrénovat ViT a TeT tak, aby pro páry dávali co nejpodobnější embeddingy
+
+- $$ViT(\text{obrázek}) = o_{ViT} \approx t_{TeT} = TeT(\text{text})$$
 
 ### Jak to trénovat?
 
@@ -763,9 +774,16 @@ $$
 
 ![](images/clip.png)
   
+### Jak s tím předpovídat?
+
+- :warning: ViT ani TeT nefungují na druhou stranu (z embeddingu nedostanu text)
+- vezmu popisy tříd/textů, které mě zajímají (třeba jména zvířat)
+- proženu je skrz TeT
+- proženu obrázek skrz ViT
+- vezmu nejbližší výsledek z transformované množiny textových popisů k vizuálnímu embeddingu
+
 ### Použití
 
-- vezmu text, narvu ho do TeT a dostanu embedding textu
 - umí zero-shot clf (klasifikuje obrázky, přestože je nikdy neviděl)
   - ViT a TeT fungují pouze v jednom směru (nelze vzít text embedding a dostat z něj text)
   - classy, které chceme rozlišit si zapíšeme a pak je embeddujeme (máme databázi embeddingu class)
@@ -775,7 +793,8 @@ $$
 ### Výhody
 
 - robustní pro různá data
-  - výborně abstrahuje, rozšiřitelnost
+- výborně abstrahuje
+- je rozšiřitelný
 
 <div style="page-break-after: always;"></div>
 
@@ -786,8 +805,8 @@ $$
 - díky interakci s uživatelem máme několik informací navíc:
   - feedback ohledně relevantnosti výsledků a dotazu
   - dobrá vizualizace může pomoci s orientováním se ve větším množství dat
-  - pro některé dotazy je potřeba jakože fakt vyhledávat, klidně í víckrát, v databázi
-- vyhodnotit, jaká UI funguje a jaká ne, je dost náročné
+  - pro některé dotazy je potřeba jakože fakt vyhledávat, klidně í víckrát a delší dobu, v databázi
+- vyhodnotit jaká UI funguje a jaká ne, je dost náročné
 - model je updatován na základě obrázků vybraných uživatelem
 - relevance feedback loop:
   - univerzální přístup
@@ -864,14 +883,14 @@ $$
 
 - pokud je obrázků příliš, může pomoci nějaká algoritmická reorganizace top nalezených shod podle jiných dalších atributů
 - obecný nápad:
-  - prohazujeme obrázky, dokud to zlepšuje skóre (musíme nadefinovat nnějakou funkci, co chceme zlepšovat)
+  - prohazujeme obrázky, dokud to zlepšuje skóre (musíme nadefinovat nějakou funkci, co chceme zlepšovat)
   - chceme podobné u sebe
 
 
 - nechť $\Omega$ je set dat, kde pro každé dva objekty umíme spočítat *dissimilarity* $\delta$("rozdílnost"), ta je skoro-metrika. cílem je každému objektu $i$ přiřadit vlastní chlívek $L_i$, tak aby se maximalizovala funkce
 
 $$
-\argmax_L \sum_{\forall i,j \in \Omega} \frac{(\|P(L_s) - P(L_t)\| - \bar{P})(\delta(s,t) - \bar{\delta})}{\sigma_P \sigma_\delta}
+\argmax_L \sum_{\forall s,t \in \Omega} \frac{(\|P(L_s) - P(L_t)\| - \bar{P})(\delta(s,t) - \bar{\delta})}{\sigma_P \sigma_\delta}
 $$
 
 - kde:
